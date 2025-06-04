@@ -205,8 +205,8 @@ int rtgsfit(
     int xpt_n = 0;
     int opt_n = 0;
 
-    double g_coef_meas_w_with_regularisation[N_COEF*(N_MEAS+5)];  // order: [(i_coef=0, i_meas=0), (i_coef=0, i_meas=1), (i_coef=0, i_meas=2), ...]
-    double meas_no_coil_cp_with_regularisation[N_MEAS + 5];
+    // double g_coef_meas_w_with_regularisation[N_COEF*(N_MEAS+5)];  // order: [(i_coef=0, i_meas=0), (i_coef=0, i_meas=1), (i_coef=0, i_meas=2), ...]
+    // double meas_no_coil_cp_with_regularisation[N_MEAS + 5];
 
     // will this be done during compilation?
     memcpy(g_coef_meas_w, G_COEF_MEAS_WEIGHT, sizeof(double)*N_MEAS*N_COEF);
@@ -241,14 +241,14 @@ int rtgsfit(
     // "rcond" = -1 == machine precision
 
     // Add regularisations
-    for (int i_coef = 0; i_coef < N_COEF; i_coef++) {
-        for (int i_meas = 0; i_meas < N_MEAS; i_meas++) {
-            g_coef_meas_w_with_regularisation[i_coef * (N_MEAS + 5) + i_meas] = g_coef_meas_w[i_coef*N_MEAS + i_meas];
-        }
-        for (int i_meas = N_MEAS; i_meas < N_MEAS + 5; i_meas++) {
-            g_coef_meas_w_with_regularisation[i_coef * (N_MEAS + 5) + i_meas] = 0.0;
-        }
-    }
+    // for (int i_coef = 0; i_coef < N_COEF; i_coef++) {
+    //     for (int i_meas = 0; i_meas < N_MEAS; i_meas++) {
+    //         g_coef_meas_w_with_regularisation[i_coef * (N_MEAS + 5) + i_meas] = g_coef_meas_w[i_coef*N_MEAS + i_meas];
+    //     }
+    //     for (int i_meas = N_MEAS; i_meas < N_MEAS + 5; i_meas++) {
+    //         g_coef_meas_w_with_regularisation[i_coef * (N_MEAS + 5) + i_meas] = 0.0;
+    //     }
+    // }
 
 
 
@@ -266,50 +266,50 @@ int rtgsfit(
     // }
 
 
-    g_coef_meas_w_with_regularisation[(N_MEAS + 5) * 3 + N_MEAS + 0] = 15.0 * 0.001 * 20.0 * 6.28;  // IVC eig_01
-    g_coef_meas_w_with_regularisation[(N_MEAS + 5) * 4 + N_MEAS + 1] = 15.0 * 0.001 * 20.0 * 6.28;  // IVC eig_02
-    g_coef_meas_w_with_regularisation[(N_MEAS + 5) * 5 + N_MEAS + 2] = 15.0 * 0.001 * 20.0 * 6.28;  // IVC eig_03
-    g_coef_meas_w_with_regularisation[(N_MEAS + 5) * 6 + N_MEAS + 3] = 15.0 * 0.001 * 20.0 * 6.28;  // IVC eig_04
-    g_coef_meas_w_with_regularisation[(N_MEAS + 5) * 7 + N_MEAS + 4] = 15.0 * 0.001 * 20.0 * 6.28;  // IVC eig_05
+    // g_coef_meas_w_with_regularisation[(N_MEAS + 5) * 3 + N_MEAS + 0] = 15.0 * 0.001 * 20.0 * 6.28;  // IVC eig_01
+    // g_coef_meas_w_with_regularisation[(N_MEAS + 5) * 4 + N_MEAS + 1] = 15.0 * 0.001 * 20.0 * 6.28;  // IVC eig_02
+    // g_coef_meas_w_with_regularisation[(N_MEAS + 5) * 5 + N_MEAS + 2] = 15.0 * 0.001 * 20.0 * 6.28;  // IVC eig_03
+    // g_coef_meas_w_with_regularisation[(N_MEAS + 5) * 6 + N_MEAS + 3] = 15.0 * 0.001 * 20.0 * 6.28;  // IVC eig_04
+    // g_coef_meas_w_with_regularisation[(N_MEAS + 5) * 7 + N_MEAS + 4] = 15.0 * 0.001 * 20.0 * 6.28;  // IVC eig_05
 
-    for (i_meas=0; i_meas<N_MEAS; i_meas++)
-    {
-        meas_no_coil_cp_with_regularisation[i_meas] = meas_no_coil_cp[i_meas];
-    }
-    for (i_meas=N_MEAS; i_meas<N_MEAS + 5; i_meas++)
-    {
-        meas_no_coil_cp_with_regularisation[i_meas] = 0.0;
-    }
+    // for (i_meas=0; i_meas<N_MEAS; i_meas++)
+    // {
+    //     meas_no_coil_cp_with_regularisation[i_meas] = meas_no_coil_cp[i_meas];
+    // }
+    // for (i_meas=N_MEAS; i_meas<N_MEAS + 5; i_meas++)
+    // {
+    //     meas_no_coil_cp_with_regularisation[i_meas] = 0.0;
+    // }
 
-    // info = LAPACKE_dgelss(
-    //   LAPACK_COL_MAJOR,
-    //   N_MEAS,
-    //   N_COEF,
-    //   1,
-    //   g_coef_meas_w,
-    //   N_MEAS,
-    //   meas_no_coil_cp,
-    //   N_MEAS,
-    //   single_vals,
-    //   rcond,
-    //   &rank
-    // );
     info = LAPACKE_dgelss(
       LAPACK_COL_MAJOR,
-      N_MEAS+5,
+      N_MEAS,
       N_COEF,
       1,
-      g_coef_meas_w_with_regularisation,
-      N_MEAS+5,
-      meas_no_coil_cp_with_regularisation,
-      N_MEAS+5,
+      g_coef_meas_w,
+      N_MEAS,
+      meas_no_coil_cp,
+      N_MEAS,
       single_vals,
       rcond,
       &rank
     );
+    // info = LAPACKE_dgelss(
+    //   LAPACK_COL_MAJOR,
+    //   N_MEAS+5,
+    //   N_COEF,
+    //   1,
+    //   g_coef_meas_w_with_regularisation,
+    //   N_MEAS+5,
+    //   meas_no_coil_cp_with_regularisation,
+    //   N_MEAS+5,
+    //   single_vals,
+    //   rcond,
+    //   &rank
+    // );
 
     // BUXTON: copy "meas_no_coil_cp" into "coef"
-    memcpy(coef, meas_no_coil_cp_with_regularisation, sizeof(double) * N_COEF);
+    memcpy(coef, meas_no_coil_cp, sizeof(double) * N_COEF);
 
     // apply coeff to find current
     // BUXTON: matrix-vector multiplication; result stored in "source"
