@@ -102,6 +102,49 @@ double find_flux_on_limiter(double* flux_total)
     return flux_limit_max;
 }
 
+double find_flux_on_limiter_xfiltered(double flux_total[],
+                                      double xpt_r[],
+                                      double xpt_z[],
+                                      int xpt_n,
+                                      double axis_r,
+                                      double axis_z)
+{
+
+    int i_limit, i_intrp, idx;
+    double flux_limit_max, flux_limit;
+    double dot_product;
+
+    flux_limit_max = -DBL_MAX;
+
+    for (i_limit = 0; i_limit < N_LIMIT; i_limit++)
+    {
+
+        // If dot product of (R_LIM[i_limit] - xpt_r, Z_LIM[i_limit] - xpt_z) and 
+        // (axis_r - xpt_r, axis_z - xpt_z) is negative for any xpt, skip this limit point
+        for (int i_xpt = 0; i_xpt < xpt_n; i_xpt++)
+        {
+            dot_product = (LIMIT_R[i_limit] - xpt_r[i_xpt]) * (axis_r[i_xpt] - xpt_r[i_xpt]) +
+                          (LIMIT_Z[i_limit] - xpt_z[i_xpt]) * (axis_z[i_xpt] - xpt_z[i_xpt]);
+            if (dot_product < 0.0)
+            {
+                break; // skip this limit point
+            }
+        }
+
+        flux_limit = 0.0;
+        for (i_intrp = 0; i_intrp < N_INTRP; i_intrp++)
+        {
+            idx = i_limit*N_INTRP + i_intrp;
+            flux_limit += LIMIT_WEIGHT[idx] * flux_total[LIMIT_IDX[idx]];
+        }
+        if (flux_limit > flux_limit_max)
+        {
+            flux_limit_max = flux_limit;
+        }
+    }
+    return flux_limit_max;
+}
+
 
 void normalise_flux(
         double* flux_total,
@@ -158,6 +201,7 @@ int rtgsfit(
     double lcfs_flux, axis_flux, axis_r, axis_z;
     double xpt_r[N_XPT_MAX], xpt_z[N_XPT_MAX], xpt_flux[N_XPT_MAX];
     double opt_r[N_XPT_MAX], opt_z[N_XPT_MAX], opt_flux[N_XPT_MAX];
+    double LIMIT_R[N_LIMIT], LIMIT_Z[N_LIMIT];
     int xpt_n = 0;
     int opt_n = 0;
 
@@ -334,7 +378,7 @@ int rtgsfit(
     }
 
     // flux value on limiter
-    lcfs_flux = find_flux_on_limiter(flux_total);
+    // lcfs_flux = find_flux_on_limiter(flux_total); // Using find_flux_on_limiter_xfiltered instead.
 
     // find x point & opt
     find_null_in_gradient_march(flux_total, opt_r, opt_z, opt_flux, &opt_n,
@@ -345,6 +389,20 @@ int rtgsfit(
     axis_flux = opt_flux[i_opt];
     axis_r = opt_r[i_opt];
     axis_z = opt_z[i_opt];
+
+    // Calulcate LIMIT_R and LIMIT_Z
+    // Alex P: We need to precompute these values and store them in the constants.c file.
+    for (int i_limit = 0; i_limit < N_LIMIT; i_limit++) {
+        LIMIT_R[i_limit] = 0.0;
+        LIMIT_Z[i_limit] = 0.0;
+        for (int i_intrp = 0; i_intrp < N_INTRP; i_intrp++) {
+            int idx = i_limit * N_INTRP + i_intrp;
+            LIMIT_R[i_limit] += LIMIT_WEIGHT[idx] * R_GRID[LIMIT_IDX[idx]];
+            LIMIT_Z[i_limit] += LIMIT_WEIGHT[idx] * Z_GRID[LIMIT_IDX[idx]];
+        }
+    }
+
+    lcfs_flux = find_flux_on_limiter_xfiltered(flux_total, xpt_r, xpt_z, xpt_n, axis_r, axis_z);
 
     // select xpt
     if (xpt_n > 0)
