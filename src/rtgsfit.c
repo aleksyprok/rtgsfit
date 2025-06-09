@@ -102,6 +102,31 @@ double find_flux_on_limiter(double* flux_total)
     return flux_limit_max;
 }
 
+/**
+ * @brief Calculates the flux on the limiter but excludes some of the
+ * limit points based on the location of the x-points.
+ *
+ * The ith x-point is located at (xpt_r[i], xpt_z[i]) and the
+ * jth limiter point is located at (LIMIT_R[j], LIMIT_Z[j]).
+ * 
+ * The vector v that points from the x-point to the limiter point is
+ * v = (LIMIT_R[j] - xpt_r[i], LIMIT_Z[j] - xpt_z[i]).
+ * The vector w that points from the x-point to the axis is
+ * w = (axis_r - xpt_r[i], axis_z - xpt_z[i]).
+ * 
+ * If the dot product of v and w is negative, then the limiter point
+ * is not considered for the flux calculation.
+ *
+ * @param flux_total Array of total flux values.
+ * @param xpt_r Array of x-point R coordinates.
+ * @param xpt_z Array of x-point Z coordinates.
+ * @param xpt_n Number of x-points.
+ * @param axis_r R coordinate of the axis.
+ * @param axis_z Z coordinate of the axis.
+ * @param LIMIT_R Array of limiter R coordinates.
+ * @param LIMIT_Z Array of limiter Z coordinates.
+ * @return The computed flux value on the limiter after x-point-filtering.
+ */
 double find_flux_on_limiter_xfiltered(double flux_total[],
                                       double xpt_r[],
                                       double xpt_z[],
