@@ -107,10 +107,12 @@ double find_flux_on_limiter_xfiltered(double flux_total[],
                                       double xpt_z[],
                                       int xpt_n,
                                       double axis_r,
-                                      double axis_z)
+                                      double axis_z,
+                                      double LIMIT_R[],
+                                      double LIMIT_Z[])
 {
 
-    int i_limit, i_intrp, idx;
+    int i_limit, i_intrp, idx, skip;
     double flux_limit_max, flux_limit;
     double dot_product;
 
@@ -121,15 +123,19 @@ double find_flux_on_limiter_xfiltered(double flux_total[],
 
         // If dot product of (R_LIM[i_limit] - xpt_r, Z_LIM[i_limit] - xpt_z) and 
         // (axis_r - xpt_r, axis_z - xpt_z) is negative for any xpt, skip this limit point
+        skip=0;
         for (int i_xpt = 0; i_xpt < xpt_n; i_xpt++)
         {
-            dot_product = (LIMIT_R[i_limit] - xpt_r[i_xpt]) * (axis_r[i_xpt] - xpt_r[i_xpt]) +
-                          (LIMIT_Z[i_limit] - xpt_z[i_xpt]) * (axis_z[i_xpt] - xpt_z[i_xpt]);
+            dot_product = (LIMIT_R[i_limit] - xpt_r[i_xpt]) * (axis_r - xpt_r[i_xpt]) +
+                          (LIMIT_Z[i_limit] - xpt_z[i_xpt]) * (axis_z - xpt_z[i_xpt]);
             if (dot_product < 0.0)
             {
-                break; // skip this limit point
+                skip = 1; // skip this limit point
+                break;
             }
         }
+
+        if (skip) continue;
 
         flux_limit = 0.0;
         for (i_intrp = 0; i_intrp < N_INTRP; i_intrp++)
@@ -401,8 +407,7 @@ int rtgsfit(
             LIMIT_Z[i_limit] += LIMIT_WEIGHT[idx] * Z_GRID[LIMIT_IDX[idx]];
         }
     }
-
-    lcfs_flux = find_flux_on_limiter_xfiltered(flux_total, xpt_r, xpt_z, xpt_n, axis_r, axis_z);
+    lcfs_flux = find_flux_on_limiter_xfiltered(flux_total, xpt_r, xpt_z, xpt_n, axis_r, axis_z, LIMIT_R, LIMIT_Z);
 
     // select xpt
     if (xpt_n > 0)
